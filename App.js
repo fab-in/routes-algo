@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { View, TextInput, Button, Text, ScrollView } from "react-native";
+import { View, Button, Text, TextInput } from "react-native";
 import axios from "axios";
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 
 const App = () => {
   const [origin, setOrigin] = useState("");
@@ -37,33 +38,12 @@ const App = () => {
       const destinationCoordinates =
         destinationResponse.data.results[0].geometry.location;
 
-
-        const headers = {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": "AIzaSyDxcgmpNTtROwth6FMxilVQCUZ-D8U8384",
-        };
-  
-        // Set up body
-        const body = {
-          origin: `${originCoordinates.lat},${originCoordinates.lng}`,
-          destination: `${destinationCoordinates.lat},${destinationCoordinates.lng}`,
-          mode: "transit",
-          key: "AIzaSyDxcgmpNTtROwth6FMxilVQCUZ-D8U8384",
-        };
-  
       // Get route details
       const routeResponse = await axios.get(
-        `https://maps.googleapis.com/maps/api/directions/json?origin=${originCoordinates.lat},${originCoordinates.lng}&destination=${destinationCoordinates.lat},${destinationCoordinates.lng}&alternatives=true&key=AIzaSyDxcgmpNTtROwth6FMxilVQCUZ-D8U8384`,
-        {
-          params: body,
-          headers: headers
-        }
+        `https://maps.googleapis.com/maps/api/directions/json?origin=${originCoordinates.lat},${originCoordinates.lng}&destination=${destinationCoordinates.lat},${destinationCoordinates.lng}&alternatives=true&key=AIzaSyDxcgmpNTtROwth6FMxilVQCUZ-D8U8384`
       );
 
       const routeDetails = routeResponse.data.routes;
-      console.log(routeResponse.data.routes[0].legs[0]);
-
-      // Set the routes state
       setRoutes(routeDetails);
     } catch (error) {
       console.error("Error fetching data: ", error);
@@ -71,53 +51,40 @@ const App = () => {
   };
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 20 , alignItems:"center",justifyContent:"center"}}>
-      <TextInput
-        style={{
-          height: 40,
-          width: 200,
-          borderColor: "gray",
-          borderWidth: 1,
-          marginBottom: 10,
+    <View style={{ flex:1, padding: 20 }}>
+      <GooglePlacesAutocomplete
+        placeholder='Enter Origin'
+        onPress={(data, details = null) => {
+          setOrigin(data.description);
         }}
-        placeholder="Origin"
-        value={origin}
-        onChangeText={(text) => setOrigin(text)}
+        query={{
+          key: 'AIzaSyDxcgmpNTtROwth6FMxilVQCUZ-D8U8384',
+          language: 'en',
+        }}
       />
-      <TextInput
-        style={{
-          height: 40,
-          width: 200,
-          borderColor: "gray",
-          borderWidth: 1,
-          marginBottom: 10,
+      <GooglePlacesAutocomplete
+        placeholder='Enter Destination'
+        onPress={(data, details = null) => {
+          setDestination(data.description);
         }}
-        placeholder="Destination"
-        value={destination}
-        onChangeText={(text) => setDestination(text)}
+        query={{
+          key: 'AIzaSyDxcgmpNTtROwth6FMxilVQCUZ-D8U8384',
+          language: 'en',
+        }}
       />
       <Button title="Get Routes" onPress={getCoordinatesAndRoutes} />
-      {routes && routes.map((route)=> <View>
-          <Text>Route Details:</Text>
-          <Text></Text>
-
-          <View>
-        
-              <View>
-                <Text> Start Address : {route?.legs[0].start_address}</Text>
-                <Text></Text>
-                <Text>End Address : {route?.legs[0].end_address}</Text>
-                <Text></Text>
-                <Text>Total Distance : {route?.legs[0].distance.text}</Text>
-                <Text>Total Time :{route?.legs[0].duration.text}</Text>
-
-              </View>
-       
-          </View>
-        </View>)
-        
-      }
-    </ScrollView>
+      {routes && routes.map((route, index) => (
+        <View key={index}>
+          <Text>Route Details {index + 1}:</Text>
+          <Text>Start Address: {route?.legs[0].start_address}</Text>
+          <Text>End Address: {route?.legs[0].end_address}</Text>
+          <Text>Total Distance: {route?.legs[0].distance.text}</Text>
+          <Text>Total Time: {route?.legs[0].duration.text}</Text>
+          <Text>-------------------------------------------------------------</Text>
+        </View>
+      ))}
+      
+    </View>
   );
 };
 
